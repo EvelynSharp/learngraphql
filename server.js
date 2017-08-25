@@ -5,13 +5,14 @@ const express = require('express');
 const expressGraphQL = require('express-graphql');
 //compatability layer between express and graphyQL
 //must be GraphQL
-
+const schema = require('./schema/schema');
 
 const app = express();
 
 //the only time use graphql instead of GraphQL
 //this tells express send all req to gql if using route '/graphql'
 app.use('/graphql', expressGraphQL({
+  schema,
   graphiql: true
 }))
 //graphiql is a tool allow making req to development server
@@ -21,7 +22,7 @@ app.use('/graphql', expressGraphQL({
 //middlewares are tiny func that's mean to intercept or modify req coming through to express server
 //expressGraphQL is registered as a middleware
 
-//schema file - tell graphql how the data in our app is arranged or how it can be accessed 
+//schema file - tell graphql how the data in our app is arranged or how it can be accessed
 
 
 app.listen(4000, () => {

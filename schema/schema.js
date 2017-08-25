@@ -1,14 +1,16 @@
 const graphql = require('graphql');
+const axios = require('axios');
 const {
   GraphQLObjectType,
   GraphQLString,
-  GraphQLInt
+  GraphQLInt,
+  GraphQLSchema //takes a rootquery and returns a graphql schema instance
 } = graphql;
 
-const users = [
-  { id: '23', firstName: 'Bill', age: 20},
-  { id: '47', firstName: 'Samantha', age: 21}
-]
+// const users = [
+//   { id: '23', firstName: 'Bill', age: 20},
+//   { id: '47', firstName: 'Samantha', age: 21}
+// ]
 
 //instruct graphyql existence of a user
 //name(string, cap 1st letter) and fields(tell gql diff properties a User has) are required properties
@@ -30,8 +32,17 @@ const RootQuery = new GraphQLObjectType({
       args: { id: { type: GraphQLString }}, //args is short for arugments
       resolve(parentValue, args) {
         //the actual action of go grab the data based on args provided ; parentValue almost never used
-
+        // return _.find(users, { id: args.id });
+        return axios.get(`http://localhost:3000/users/${args.id}`)
+          .then(res => res.data );
       }
     }
   }
 });
+
+//merge the two types together into a graphql schema obj
+//hand it back to the graphql middlewate in server.js
+
+module.exports = new GraphQLSchema ({
+  query: RootQuery
+})
