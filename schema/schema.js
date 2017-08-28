@@ -4,7 +4,9 @@ const {
   GraphQLObjectType,
   GraphQLString,
   GraphQLInt,
+  GraphQLList,
   GraphQLSchema //takes a rootquery and returns a graphql schema instance
+
 } = graphql;
 
 // const users = [
@@ -12,16 +14,42 @@ const {
 //   { id: '47', firstName: 'Samantha', age: 21}
 // ]
 
+//must be before UserType - to use as a newly defined type for a field in User
+//associate it with a user - treat associations between types as though it's just another field
+const CompanyType = new GraphQLObjectType({
+  name: 'Company',
+  fields: () => ( {
+    id: { type: GraphQLString },
+    name: { type: GraphQLString },
+    description: { type: GraphQLString },
+    users: {
+      type: new GraphQLList(UserType),
+      resolve(parentValue, args) {
+        return axios.get(`http://localhost:3000/companies/${parentValue.id}/users`)
+          .then( res => res.data)
+      }
+    }
+  })
+});
+
+
 //instruct graphyql existence of a user
 //name(string, cap 1st letter) and fields(tell gql diff properties a User has) are required properties
 //tell graphql structure, and properties
 const UserType = new GraphQLObjectType({
   name: 'User',
-  fields: {
-    id: { type: GraphQLString},
-    firstName: { type: GraphQLString},
-    age: { type: GraphQLInt}
-  }
+  fields: () => ({
+    id: { type: GraphQLString },
+    firstName: { type: GraphQLString },
+    age: { type: GraphQLInt },
+    company: {
+      type: CompanyType,
+      resolve(parentValue, args) {
+        return axios.get(`http://localhost:3000/companies/${parentValue.companyId}`)
+          .then( res => res.data)
+      }
+    }
+  })
 })
 
 const RootQuery = new GraphQLObjectType({
@@ -35,6 +63,14 @@ const RootQuery = new GraphQLObjectType({
         // return _.find(users, { id: args.id });
         return axios.get(`http://localhost:3000/users/${args.id}`)
           .then(res => res.data );
+      }
+    },
+    company: {
+      type: CompanyType,
+      args: { id: { type: GraphQLString }},
+      resolve(parentValue, args) {
+        return axios.get(`http://localhost:3000/companies/${args.id}`)
+          .then(res => res.data);
       }
     }
   }
