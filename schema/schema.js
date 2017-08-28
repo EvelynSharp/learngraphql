@@ -5,10 +5,11 @@ const {
   GraphQLString,
   GraphQLInt,
   GraphQLList,
+  GraphQLNonNull,
   GraphQLSchema //takes a rootquery and returns a graphql schema instance
 
 } = graphql;
-
+const baseUrl = 'http://localhost:3000'
 // const users = [
 //   { id: '23', firstName: 'Bill', age: 20},
 //   { id: '47', firstName: 'Samantha', age: 21}
@@ -76,9 +77,39 @@ const RootQuery = new GraphQLObjectType({
   }
 });
 
-//merge the two types together into a graphql schema obj
+const mutation = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: {
+    addUser: {
+      type: UserType, //define what comes back from the resolve func, might change after operation
+      args: {
+        firstName: { type: new GraphQLNonNull(GraphQLString) }, //required field or error
+        age: { type: new GraphQLNonNull(GraphQLInt) },
+        companyId: { type: GraphQLString}
+      },
+      resolve(parentValue, { firstName, age }) {
+        return axios.post(`${baseUrl}/users`, { firstName, age })
+          .then( res => res.data )
+      }
+    },
+    deleteUser: {
+      type: UserType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLString)}
+      },
+      resolve(parentValue, {id}) {
+        return axios.delete(`${baseUrl}/users/${id}`)
+          .then( res => res.data )
+      }
+    }
+  }
+});
+
+
+//merge the types together into a graphql schema obj
 //hand it back to the graphql middlewate in server.js
 
 module.exports = new GraphQLSchema ({
-  query: RootQuery
+  query: RootQuery,
+  mutation,
 })
